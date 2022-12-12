@@ -26,5 +26,4 @@ def create_table(input_descriptions, service_name):
     title = service_name
     table_instance = AsciiTable(table_content, title)
     table_instance.justify_columns[2] = 'right'
-    print(table_instance.table)
-    print()
+    return table_instance.table

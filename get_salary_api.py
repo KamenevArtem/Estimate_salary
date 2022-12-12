@@ -11,6 +11,7 @@ def predict_rub_salary_hh(languages):
     moscow_id = "1"
     dayly_coverage = "30"
     page_quantity = 20
+    required_currency = "RUR"
     params = {
         "User-Agent": "api-test-agent",
         "text": "Программист",
@@ -20,7 +21,7 @@ def predict_rub_salary_hh(languages):
         "currency": "RUR",
         "page": "",
     }
-    salary_info = {}
+    salary_description = {}
     for language in languages:
         params["text"] = language
         average_salary = 0
@@ -29,27 +30,38 @@ def predict_rub_salary_hh(languages):
             params["page"] = page_number
             response = requests.get(url, params)
             response.raise_for_status()
-            response = response.json()
-            if page_number >= response["pages"] or page_number > page_quantity:
+            decoded_response = response.json()
+            if page_number >= decoded_response["pages"] or page_number > page_quantity:
                 break
-            found_vacancies = response["found"]
-            vacancies_description = response["items"]
+            found_vacancies = decoded_response["found"]
+            vacancies_description = decoded_response["items"]
             for vacancy in vacancies_description:
-                salary_description = vacancy["salary"]
-                salary_from = salary_description["from"]
-                salary_to = salary_description["to"]
-                currency = salary_description["currency"]
-                if currency == "RUR":
-                    predicted_salary = predict_rub_salary(salary_from, salary_to)
-                    vacancies_processed +=1   
-                    average_salary += predicted_salary
-        average_salary = average_salary//vacancies_processed
-        salary_info[language] = {
-            "found_vacancies": found_vacancies, 
-            "vacancies_processed": vacancies_processed,
-            "average_salary": average_salary,
-        }
-    create_table(salary_info, "HeadHunters Moscow")
+                salary_content = vacancy["salary"]
+                salary_from = salary_content["from"]
+                salary_to = salary_content["to"]
+                currency = salary_content["currency"]
+                if currency != required_currency:
+                    continue
+                predicted_salary = predict_rub_salary(salary_from, salary_to)
+                vacancies_processed +=1   
+                average_salary += predicted_salary
+        if not vacancies_processed:
+            average_salary = 0
+            salary_description[language] = {
+                "found_vacancies": found_vacancies,
+                "vacancies_processed": "Нет вакансий с "
+                "указанной зарплатой",
+                "average_salary": "Нет вакансий с "
+                "указанной зарплатой",
+            }
+        else:
+            average_salary = average_salary//vacancies_processed
+            salary_description[language] = {
+                "found_vacancies": found_vacancies, 
+                "vacancies_processed": vacancies_processed,
+                "average_salary": average_salary,
+            }
+    return salary_description
 
 
 def predict_rub_salary_sj(access_token, languages):
@@ -65,7 +77,7 @@ def predict_rub_salary_sj(access_token, languages):
         "page": "",
         "count": {vacancies_per_page},
     }
-    vacancie_info = {}
+    salary_description = {}
     for language in languages:
         params["keyword"] = language
         average_salary = 0
@@ -74,30 +86,36 @@ def predict_rub_salary_sj(access_token, languages):
             params["page"] = page_number
             response = requests.get(url, headers = header, params=params)
             response.raise_for_status()
-            response = response.json()
+            decoded_response = response.json()
             if page_number >= 5:
                 break
-            found_vacancies = response["total"]
-            vacancie_data = response["objects"]
-            for vacancie in vacancie_data:
+            found_vacancies = decoded_response["total"]
+            vacancie_description = decoded_response["objects"]
+            for vacancie in vacancie_description:
                 salary_from = vacancie["payment_from"]
                 salary_to = vacancie["payment_to"]
                 if not salary_from and not salary_to:
                     continue
-                else:
-                    predicted_salary = predict_rub_salary(salary_from, salary_to)
-                    vacancies_processed += 1
-                    average_salary += predicted_salary
-        if vacancies_processed == 0:
+                predicted_salary = predict_rub_salary(salary_from, salary_to)
+                vacancies_processed += 1
+                average_salary += predicted_salary
+        if not vacancies_processed:
             average_salary = 0
+            salary_description[language] = {
+                "found_vacancies": found_vacancies,
+                "vacancies_processed": "Нет вакансий с "
+                "указанной зарплатой",
+                "average_salary": "Нет вакансий с "
+                "указанной зарплатой",
+            }
         else:
             average_salary = average_salary//vacancies_processed
-            vacancie_info[language] = {
+            salary_description[language] = {
                 "found_vacancies": found_vacancies, 
                 "vacancies_processed": vacancies_processed,
                 "average_salary": average_salary,
             }
-    create_table(vacancie_info, "SuperJob Moscow")
+    return salary_description
 
 
 def main():
@@ -105,8 +123,10 @@ def main():
     access_token = os.environ["SUPERJOB_API_KEY"]
     languanges = ["C#", "Python", "C++", "Java Script",
                   "PHP", "Ruby", "go", "1c"]
-    predict_rub_salary_sj(access_token, languanges)
-    predict_rub_salary_hh(languanges)
+    input_descriptions_sj = predict_rub_salary_sj(access_token, languanges)
+    input_descriptions_hh = predict_rub_salary_hh(languanges)
+    print(create_table(input_descriptions_sj, "SuperJob Moscow"))
+    print(create_table(input_descriptions_hh, "HeadHunters Moscow"))
 
 
 if __name__ == "__main__":
