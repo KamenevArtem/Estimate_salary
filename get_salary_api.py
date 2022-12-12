@@ -8,11 +8,14 @@ from dotenv import load_dotenv
 
 def predict_rub_salary_hh(languages):
     url = "https://api.hh.ru/vacancies/"
+    moscow_id = "1"
+    dayly_coverage = "30"
+    page_quantity = 20
     params = {
         "User-Agent": "api-test-agent",
         "text": "Программист",
-        "area": "1",
-        "period": "30",
+        "area": {moscow_id},
+        "period": {dayly_coverage},
         "only_with_salary": "True",
         "currency": "RUR",
         "page": "",
@@ -27,7 +30,7 @@ def predict_rub_salary_hh(languages):
             response = requests.get(url, params)
             response.raise_for_status()
             response = response.json()
-            if page_number >= response["pages"] or page_number > 20:
+            if page_number >= response["pages"] or page_number > page_quantity:
                 break
             found_vacancies = response["found"]
             vacancies_description = response["items"]
@@ -51,14 +54,16 @@ def predict_rub_salary_hh(languages):
 
 def predict_rub_salary_sj(access_token, languages):
     url = "https://api.superjob.ru/2.0/vacancies/"
+    moscow_id = "4"
+    vacancies_per_page = "100"
     header = {
         "X-Api-App-Id": f"{access_token}",
     }
     params = {
-        "town": "4",
+        "town": {moscow_id},
         "keyword": "",
         "page": "",
-        "count": "100",
+        "count": {vacancies_per_page},
     }
     vacancie_info = {}
     for language in languages:
