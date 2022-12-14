@@ -47,20 +47,13 @@ def predict_rub_salary_hh(languages):
                 average_salary += predicted_salary
         if not vacancies_processed:
             average_salary = 0
-            salary_description[language] = {
-                "found_vacancies": found_vacancies,
-                "vacancies_processed": "Нет вакансий с "
-                "указанной зарплатой",
-                "average_salary": "Нет вакансий с "
-                "указанной зарплатой",
-            }
         else:
             average_salary = average_salary//vacancies_processed
-            salary_description[language] = {
-                "found_vacancies": found_vacancies, 
-                "vacancies_processed": vacancies_processed,
-                "average_salary": average_salary,
-            }
+        salary_description[language] = {
+            "found_vacancies": found_vacancies, 
+            "vacancies_processed": vacancies_processed,
+            "average_salary": average_salary,
+        }
     return salary_description
 
 
@@ -101,20 +94,13 @@ def predict_rub_salary_sj(access_token, languages):
                 average_salary += predicted_salary
         if not vacancies_processed:
             average_salary = 0
-            salary_description[language] = {
-                "found_vacancies": found_vacancies,
-                "vacancies_processed": "Нет вакансий с "
-                "указанной зарплатой",
-                "average_salary": "Нет вакансий с "
-                "указанной зарплатой",
-            }
         else:
             average_salary = average_salary//vacancies_processed
-            salary_description[language] = {
-                "found_vacancies": found_vacancies, 
-                "vacancies_processed": vacancies_processed,
-                "average_salary": average_salary,
-            }
+        salary_description[language] = {
+            "found_vacancies": found_vacancies, 
+            "vacancies_processed": vacancies_processed,
+            "average_salary": average_salary,
+        }
     return salary_description
 
 
@@ -122,7 +108,7 @@ def main():
     load_dotenv()
     access_token = os.environ["SUPERJOB_API_KEY"]
     languanges = ["C#", "Python", "C++", "Java Script",
-                  "PHP", "Ruby", "go", "1c"]
+                  "PHP", "Ruby", "go", "1c", "dfgsdfgsdg"]
     input_descriptions_sj = predict_rub_salary_sj(access_token, languanges)
     input_descriptions_hh = predict_rub_salary_hh(languanges)
     print(create_table(input_descriptions_sj, "SuperJob Moscow"))
